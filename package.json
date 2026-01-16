@@ -1,0 +1,30 @@
+{
+  "name": "raindrop-cli",
+  "version": "0.1.0",
+  "description": "AI-native CLI for Raindrop.io",
+  "module": "src/index.ts",
+  "type": "module",
+  "bin": {
+    "raindrop": "./dist/index.js"
+  },
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "dev": "bun --watch src/index.ts",
+    "test": "bun test",
+    "build": "bun build src/index.ts --outdir dist --target bun && chmod +x dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "keywords": [
+    "raindrop",
+    "bookmarks",
+    "cli",
+    "ai-native"
+  ],
+  "license": "MIT"
+}
