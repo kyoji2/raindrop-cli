@@ -4,6 +4,11 @@
   "description": "AI-native CLI for Raindrop.io",
   "module": "src/index.ts",
   "type": "module",
+  "exports": {
+    ".": "./src/api/index.ts",
+    "./api": "./src/api/index.ts",
+    "./utils": "./src/utils/index.ts"
+  },
   "bin": {
     "raindrop": "./dist/index.js"
   },
@@ -11,10 +16,19 @@
     "start": "bun run src/index.ts",
     "dev": "bun --watch src/index.ts",
     "test": "bun test",
+    "lint": "biome check ./src ./tests",
+    "lint:fix": "biome check --write ./src ./tests",
+    "format": "biome format --write ./src ./tests",
     "build": "bun build src/index.ts --outdir dist --target bun && chmod +x dist/index.js",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "@toon-format/toon": "^2.1.0",
+    "commander": "^14.0.2",
+    "ora": "^9.0.0"
+  },
   "devDependencies": {
+    "@biomejs/biome": "^2.3.11",
     "@types/bun": "latest"
   },
   "peerDependencies": {

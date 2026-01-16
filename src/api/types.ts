@@ -13,7 +13,7 @@ export interface Collection {
   parent?: { $id: number };
   cover?: string[];
   color?: string;
-  view?: 'list' | 'simple' | 'grid' | 'masonry';
+  view?: "list" | "simple" | "grid" | "masonry";
   public?: boolean;
   expanded?: boolean;
   lastUpdate?: string;
@@ -27,7 +27,7 @@ export interface Raindrop {
   link: string;
   excerpt?: string;
   note?: string;
-  type?: 'link' | 'article' | 'image' | 'video' | 'document' | 'audio';
+  type?: "link" | "article" | "image" | "video" | "document" | "audio";
   tags: string[];
   cover?: string;
   domain?: string;
@@ -67,7 +67,7 @@ export interface CollectionCreate {
   title: string;
   parent?: { $id: number };
   public?: boolean;
-  view?: 'list' | 'simple' | 'grid' | 'masonry';
+  view?: "list" | "simple" | "grid" | "masonry";
   sort?: number;
   cover?: string[];
   color?: string;
@@ -77,7 +77,7 @@ export interface CollectionUpdate {
   title?: string;
   parent?: { $id: number };
   public?: boolean;
-  view?: 'list' | 'simple' | 'grid' | 'masonry';
+  view?: "list" | "simple" | "grid" | "masonry";
   sort?: number;
   cover?: string[];
   color?: string;

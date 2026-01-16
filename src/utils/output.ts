@@ -1,71 +1,70 @@
-export type OutputFormat = 'json' | 'toon';
+import { encode as encodeToon } from "@toon-format/toon";
+
+export type OutputFormat = "json" | "toon";
 
 export interface GlobalOptions {
   dryRun: boolean;
   format: OutputFormat;
 }
 
-export function encodeToon(data: unknown): string {
-  if (Array.isArray(data)) {
-    return encodeToonTable(data);
-  }
-
-  if (typeof data === 'object' && data !== null) {
-    const obj = data as Record<string, unknown>;
-    const lines: string[] = [];
-
-    for (const [key, value] of Object.entries(obj)) {
-      if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'object') {
-        lines.push(`[${key}]`);
-        lines.push(encodeToonTable(value));
-      } else if (typeof value === 'object' && value !== null) {
-        lines.push(`[${key}]`);
-        lines.push(encodeToon(value));
-      } else {
-        lines.push(`${key}: ${formatValue(value)}`);
-      }
-    }
-    return lines.join('\n');
-  }
-
-  return String(data);
-}
-
-function encodeToonTable(items: unknown[]): string {
-  if (items.length === 0) return '';
-
-  const firstItem = items[0] as Record<string, unknown>;
-  const keys = Object.keys(firstItem);
-
-  const header = keys.join('\t');
-  const rows = items.map((item) => {
-    const row = item as Record<string, unknown>;
-    return keys.map((k) => formatValue(row[k])).join('\t');
-  });
-
-  return [header, ...rows].join('\n');
-}
-
-function formatValue(value: unknown): string {
-  if (value === null || value === undefined) return '';
-  if (Array.isArray(value)) return value.join(',');
-  if (typeof value === 'object') return JSON.stringify(value);
-  return String(value);
-}
+export { encodeToon };
 
 export function output(data: unknown, format: OutputFormat): void {
-  if (format === 'toon') {
+  if (format === "toon") {
     console.log(encodeToon(data));
   } else {
     console.log(JSON.stringify(data, null, 2));
   }
 }
 
-export function outputError(error: string, statusCode: number, hint?: string): void {
-  console.log(JSON.stringify({ error, status: statusCode, hint }, null, 2));
+export function outputError(error: string, statusCode: number, hint?: string, format: OutputFormat = "json"): never {
+  const errorData = { error, status: statusCode, hint };
+
+  if (format === "toon") {
+    console.error(`error: ${error}`);
+    console.error(`status: ${statusCode}`);
+    if (hint) console.error(`hint: ${hint}`);
+  } else {
+    console.error(JSON.stringify(errorData, null, 2));
+  }
+
   process.exit(1);
 }
 
 export function outputSuccess(data: unknown, format: OutputFormat): void {
   output(data, format);
+}
+
+export type CommandHandler = (args: string[], options: GlobalOptions) => Promise<void>;
+
+export function createCommandRunner(format: OutputFormat) {
+  return async function runCommand(handler: () => Promise<void>, errorContext?: string): Promise<void> {
+    try {
+      await handler();
+    } catch (error) {
+      if (error instanceof Error && "statusCode" in error) {
+        const apiError = error as Error & { statusCode: number; hint?: string };
+        let hint = apiError.hint;
+        if (!hint) {
+          if (apiError.statusCode === 404) {
+            hint = "The requested resource was not found. Verify the ID is correct.";
+          } else if (apiError.statusCode === 401) {
+            hint = "Authentication failed. Try running 'raindrop login' again.";
+          }
+        }
+        outputError(apiError.message, apiError.statusCode, hint, format);
+      } else if (error instanceof SyntaxError) {
+        outputError(
+          "Invalid JSON input provided to command.",
+          400,
+          "Ensure your JSON data is valid and properly escaped for the shell.",
+          format,
+        );
+      } else {
+        const message = error instanceof Error ? error.message : String(error);
+        const context = errorContext ? `${errorContext}: ${message}` : message;
+        outputError(`Unexpected error: ${context}`, 500, "Check the CLI logs or report this issue.", format);
+      }
+    }
+  };
 }
