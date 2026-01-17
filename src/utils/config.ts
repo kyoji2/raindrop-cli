@@ -1,3 +1,4 @@
+import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
@@ -54,13 +55,15 @@ export async function loadConfig(): Promise<Config | null> {
 
 export function loadConfigSync(): Config | null {
   try {
-    const file = Bun.file(CONFIG_FILE);
-    if (file.size === 0) return null;
+    if (!existsSync(CONFIG_FILE)) return null;
 
-    const text = require(CONFIG_FILE);
-    if (!isValidConfig(text)) return null;
+    const text = readFileSync(CONFIG_FILE, "utf-8");
+    if (!text.trim()) return null;
 
-    return text;
+    const data = JSON.parse(text);
+    if (!isValidConfig(data)) return null;
+
+    return data;
   } catch {
     return null;
   }

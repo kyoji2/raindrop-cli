@@ -33,7 +33,7 @@ import {
   cmdWayback,
   cmdWhoami,
 } from "./commands";
-import { type GlobalOptions, type OutputFormat, outputError } from "./utils";
+import { CLIError, type GlobalOptions, type OutputFormat } from "./utils";
 
 const VERSION = "0.1.0";
 
@@ -43,6 +43,20 @@ function getGlobalOptions(cmd: Command): GlobalOptions {
     dryRun: opts.dryRun ?? false,
     format: (opts.format as OutputFormat) ?? "toon",
   };
+}
+
+function formatAndExit(error: string, statusCode: number, hint?: string, format: OutputFormat = "toon"): never {
+  const errorData = { error, status: statusCode, hint };
+
+  if (format === "toon") {
+    console.error(`error: ${error}`);
+    console.error(`status: ${statusCode}`);
+    if (hint) console.error(`hint: ${hint}`);
+  } else {
+    console.error(JSON.stringify(errorData, null, 2));
+  }
+
+  process.exit(1);
 }
 
 function withErrorHandler<T extends unknown[]>(fn: (...args: T) => Promise<void>): (...args: T) => Promise<void> {
@@ -56,7 +70,9 @@ function withErrorHandler<T extends unknown[]>(fn: (...args: T) => Promise<void>
 }
 
 function handleError(error: unknown): never {
-  if (error instanceof RaindropError) {
+  if (error instanceof CLIError) {
+    formatAndExit(error.message, error.statusCode, error.hint);
+  } else if (error instanceof RaindropError) {
     let hint = error.hint;
     if (!hint) {
       if (error.statusCode === 404) {
@@ -65,15 +81,15 @@ function handleError(error: unknown): never {
         hint = "Authentication failed. Try running 'raindrop login' again.";
       }
     }
-    outputError(error.message, error.statusCode, hint);
+    formatAndExit(error.message, error.statusCode, hint);
   } else if (error instanceof SyntaxError) {
-    outputError(
+    formatAndExit(
       "Invalid JSON input provided to command.",
       400,
       "Ensure your JSON data is valid and properly escaped for the shell.",
     );
   } else {
-    outputError(`Unexpected error: ${error}`, 500, "Check the CLI logs or report this issue.");
+    formatAndExit(`Unexpected error: ${error}`, 500, "Check the CLI logs or report this issue.");
   }
 }
 

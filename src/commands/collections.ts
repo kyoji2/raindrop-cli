@@ -1,6 +1,7 @@
 import type { CollectionCreate, CollectionUpdate } from "../api";
 import { createCommandRunner, type GlobalOptions, output, outputError } from "../utils/output";
 import { startSpinner, stopSpinner, withSpinner } from "../utils/spinner";
+import { getTempFilePath } from "../utils/tempfile";
 import { getAuthenticatedAPI } from "./auth";
 
 export async function cmdCollectionCreate(args: string[], options: GlobalOptions): Promise<void> {
@@ -216,15 +217,15 @@ export async function cmdCollectionCover(args: string[], options: GlobalOptions)
     let isTemp = false;
 
     if (source.startsWith("http://") || source.startsWith("https://")) {
-      startSpinner("Downloading cover image...");
+      const spinner = startSpinner("Downloading cover image...");
       const response = await fetch(source);
       if (!response.ok) {
-        stopSpinner(false);
+        stopSpinner(spinner, false);
         outputError(`Failed to download image: ${response.status}`, response.status, undefined, options.format);
       }
-      filePath = "/tmp/raindrop_cover_temp.png";
+      filePath = getTempFilePath("raindrop_cover", ".png");
       await Bun.write(filePath, await response.arrayBuffer());
-      stopSpinner(true, "Downloaded");
+      stopSpinner(spinner, true, "Downloaded");
       isTemp = true;
     }
 
@@ -265,16 +266,16 @@ export async function cmdCollectionSetIcon(args: string[], options: GlobalOption
       outputError("No icons found", 404, undefined, options.format);
     }
 
-    startSpinner("Downloading icon...");
+    const spinner = startSpinner("Downloading icon...");
     const response = await fetch(iconUrl);
     if (!response.ok) {
-      stopSpinner(false);
+      stopSpinner(spinner, false);
       outputError(`Failed to download icon: ${response.status}`, response.status, undefined, options.format);
     }
 
-    const filePath = "/tmp/raindrop_icon_temp.png";
+    const filePath = getTempFilePath("raindrop_icon", ".png");
     await Bun.write(filePath, await response.arrayBuffer());
-    stopSpinner(true, "Downloaded");
+    stopSpinner(spinner, true, "Downloaded");
 
     const result = await withSpinner("Uploading icon...", () => api.uploadCollectionCover(id, filePath));
 

@@ -1,44 +1,35 @@
 import ora, { type Ora } from "ora";
 
-let currentSpinner: Ora | null = null;
-
 export function startSpinner(text: string): Ora {
-  if (currentSpinner) {
-    currentSpinner.stop();
-  }
-  currentSpinner = ora(text).start();
-  return currentSpinner;
+  return ora(text).start();
 }
 
-export function stopSpinner(success?: boolean, text?: string): void {
-  if (!currentSpinner) return;
+export function stopSpinner(spinner: Ora | null, success?: boolean, text?: string): void {
+  if (!spinner) return;
 
   if (success === true) {
-    currentSpinner.succeed(text);
+    spinner.succeed(text);
   } else if (success === false) {
-    currentSpinner.fail(text);
+    spinner.fail(text);
   } else {
-    currentSpinner.stop();
+    spinner.stop();
   }
-  currentSpinner = null;
 }
 
-export function updateSpinner(text: string): void {
-  if (currentSpinner) {
-    currentSpinner.text = text;
+export function updateSpinner(spinner: Ora | null, text: string): void {
+  if (spinner) {
+    spinner.text = text;
   }
 }
 
 export async function withSpinner<T>(text: string, fn: () => Promise<T>, successText?: string): Promise<T> {
-  const spinner = startSpinner(text);
+  const spinner = ora(text).start();
   try {
     const result = await fn();
     spinner.succeed(successText ?? text);
-    currentSpinner = null;
     return result;
   } catch (error) {
     spinner.fail();
-    currentSpinner = null;
     throw error;
   }
 }

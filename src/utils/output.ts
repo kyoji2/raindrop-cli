@@ -9,6 +9,21 @@ export interface GlobalOptions {
 
 export { encodeToon };
 
+/**
+ * CLI-specific error that should result in a non-zero exit code.
+ * Thrown instead of calling process.exit() directly for testability.
+ */
+export class CLIError extends Error {
+  constructor(
+    message: string,
+    public statusCode: number,
+    public hint?: string,
+  ) {
+    super(message);
+    this.name = "CLIError";
+  }
+}
+
 export function output(data: unknown, format: OutputFormat): void {
   if (format === "toon") {
     console.log(encodeToon(data));
@@ -17,18 +32,8 @@ export function output(data: unknown, format: OutputFormat): void {
   }
 }
 
-export function outputError(error: string, statusCode: number, hint?: string, format: OutputFormat = "json"): never {
-  const errorData = { error, status: statusCode, hint };
-
-  if (format === "toon") {
-    console.error(`error: ${error}`);
-    console.error(`status: ${statusCode}`);
-    if (hint) console.error(`hint: ${hint}`);
-  } else {
-    console.error(JSON.stringify(errorData, null, 2));
-  }
-
-  process.exit(1);
+export function outputError(error: string, statusCode: number, hint?: string, _format?: OutputFormat): never {
+  throw new CLIError(error, statusCode, hint);
 }
 
 export function outputSuccess(data: unknown, format: OutputFormat): void {
