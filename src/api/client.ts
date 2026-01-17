@@ -486,7 +486,12 @@ export class RaindropAPI {
   async getSuggestions(id: number): Promise<{ tags?: string[]; collections?: Collection[] }> {
     const data = await this.request<unknown>("GET", `/raindrop/${id}/suggest`);
     const parsed = parseResponse(SuggestionsResponseSchema, data, "getSuggestions");
-    return parsed.item || {};
+    const item = parsed.item || {};
+    return {
+      ...item,
+      tags: item.tags ?? undefined,
+      collections: item.collections ?? undefined,
+    };
   }
 
   async checkWayback(url: string): Promise<string | null> {
