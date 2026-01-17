@@ -1,6 +1,7 @@
 ---
 name: raindrop
 description: Expert guidance for using the RaindropCLI - an AI-native command-line interface for managing Raindrop.io bookmarks, collections, and tags. Use this skill when working with bookmark management, searching bookmarks, organizing collections, or automating Raindrop.io workflows.
+homepage: https://github.com/kyoji2/raindrop-cli
 ---
 
 # Raindrop CLI Assistant
@@ -13,6 +14,32 @@ The RaindropCLI provides comprehensive command-line access to Raindrop.io's book
 - **Output formats**: `toon` (token-optimized, default) or `json` (via `--format json`)
 - **Dry-run mode**: Test commands safely with `--dry-run`
 - **Schema validation**: All API responses validated with Zod schemas
+
+## Requirements & Installation
+
+### Prerequisites
+- **Bun runtime** (v1.0 or later) - [Install Bun](https://bun.sh)
+- **Raindrop.io account** - [Sign up](https://raindrop.io)
+
+### Installation
+
+**Option 1: Install from npm** (recommended)
+```bash
+bun install -g @kyoji2/raindrop-cli
+```
+
+**Option 2: Install from source**
+```bash
+git clone https://github.com/kyoji2/raindrop-cli.git
+cd raindrop-cli
+bun install
+bun link
+```
+
+**Verify installation:**
+```bash
+raindrop --version
+```
 
 ## Quick Start
 
