@@ -1,65 +1,59 @@
-import { createCommandRunner, type GlobalOptions, output } from "../utils/output";
+import { type GlobalOptions, output } from "../utils/output";
 import { withSpinner } from "../utils/spinner";
 import { getAuthenticatedAPI } from "./auth";
 
 export async function cmdContext(options: GlobalOptions): Promise<void> {
-  const runCommand = createCommandRunner(options.format);
   const api = getAuthenticatedAPI(options);
 
-  await runCommand(async () => {
-    const [user, stats, recent, collections] = await withSpinner("Loading account context...", () =>
-      Promise.all([api.getUser(), api.getStats(), api.search("", 0, 5), api.getCollections()]),
-    );
+  const [user, stats, recent, collections] = await withSpinner("Loading account context...", () =>
+    Promise.all([api.getUser(), api.getStats(), api.search("", 0, 5), api.getCollections()]),
+  );
 
-    const totalBookmarks = stats.find((s) => s._id === 0)?.count ?? 0;
+  const totalBookmarks = stats.find((s) => s._id === 0)?.count ?? 0;
 
-    const contextData = {
-      user: [{ id: user._id, name: user.fullName }],
-      stats: [
-        {
-          total_bookmarks: totalBookmarks,
-          total_collections: collections.length,
-        },
-      ],
-      structure: {
-        root_collections: collections
-          .filter((c) => !c.parent)
-          .map((c) => ({ id: c._id, title: c.title, count: c.count })),
+  const contextData = {
+    user: [{ id: user._id, name: user.fullName }],
+    stats: [
+      {
+        total_bookmarks: totalBookmarks,
+        total_collections: collections.length,
       },
-      recent_activity: recent.slice(0, 5).map((r) => ({
-        id: r._id,
-        title: r.title,
-        created: r.created,
-      })),
-    };
+    ],
+    structure: {
+      root_collections: collections
+        .filter((c) => !c.parent)
+        .map((c) => ({ id: c._id, title: c.title, count: c.count })),
+    },
+    recent_activity: recent.slice(0, 5).map((r) => ({
+      id: r._id,
+      title: r.title,
+      created: r.created,
+    })),
+  };
 
-    output(contextData, options.format);
-  });
+  output(contextData, options.format);
 }
 
 export async function cmdStructure(options: GlobalOptions): Promise<void> {
-  const runCommand = createCommandRunner(options.format);
   const api = getAuthenticatedAPI(options);
 
-  await runCommand(async () => {
-    const [collections, tags] = await withSpinner("Loading structure...", () =>
-      Promise.all([api.getCollections(), api.getTags()]),
-    );
+  const [collections, tags] = await withSpinner("Loading structure...", () =>
+    Promise.all([api.getCollections(), api.getTags()]),
+  );
 
-    output(
-      {
-        collections: collections.map((c) => ({
-          id: c._id,
-          title: c.title,
-          count: c.count,
-          parent_id: c.parent?.$id ?? null,
-          last_update: c.lastUpdate,
-        })),
-        tags: tags.map((t) => t._id),
-      },
-      options.format,
-    );
-  });
+  output(
+    {
+      collections: collections.map((c) => ({
+        id: c._id,
+        title: c.title,
+        count: c.count,
+        parent_id: c.parent?.$id ?? null,
+        last_update: c.lastUpdate,
+      })),
+      tags: tags.map((t) => t._id),
+    },
+    options.format,
+  );
 }
 
 export function cmdSchema(): void {

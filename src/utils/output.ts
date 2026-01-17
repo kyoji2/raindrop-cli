@@ -35,11 +35,3 @@ export function output(data: unknown, format: OutputFormat): void {
 export function outputError(error: string, statusCode: number, hint?: string, _format?: OutputFormat): never {
   throw new CLIError(error, statusCode, hint);
 }
-
-export type CommandHandler = (args: string[], options: GlobalOptions) => Promise<void>;
-
-export function createCommandRunner(_format: OutputFormat) {
-  return async function runCommand(handler: () => Promise<void>): Promise<void> {
-    await handler();
-  };
-}

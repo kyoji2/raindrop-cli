@@ -1,74 +1,50 @@
 import type { RaindropUpdate } from "../api";
-import { createCommandRunner, type GlobalOptions, output, outputError } from "../utils/output";
+import { type GlobalOptions, output, outputError } from "../utils/output";
 import { withSpinner } from "../utils/spinner";
 import { getAuthenticatedAPI } from "./auth";
 
-export async function cmdBatchUpdate(args: string[], options: GlobalOptions): Promise<void> {
-  const runCommand = createCommandRunner(options.format);
-
-  let ids: number[] = [];
-  let collectionId = 0;
-  let dataJson = "";
-
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i] ?? "";
-    if (arg === "--ids") {
-      i++;
-      ids = (args[i] ?? "").split(",").map((id) => parseInt(id.trim(), 10));
-    } else if (arg === "--collection" || arg === "-c") {
-      i++;
-      collectionId = parseInt(args[i] ?? "0", 10);
-    } else if (!arg.startsWith("-")) {
-      dataJson = arg;
-    }
-  }
-
-  if (ids.length === 0) {
-    outputError("--ids is required (comma-separated list)", 400, undefined, options.format);
-  }
-
-  if (!dataJson) {
-    outputError("JSON patch data is required", 400, undefined, options.format);
-  }
-
-  const api = getAuthenticatedAPI(options);
-
-  await runCommand(async () => {
-    const patchData: RaindropUpdate = JSON.parse(dataJson);
-    const success = await withSpinner(`Updating ${ids.length} bookmark(s)...`, () =>
-      api.batchUpdateRaindrops(collectionId, ids, patchData),
-    );
-    output({ success }, options.format);
-  });
+export interface BatchUpdateOptions extends GlobalOptions {
+  ids: string;
+  json: string;
+  collection?: string;
 }
 
-export async function cmdBatchDelete(args: string[], options: GlobalOptions): Promise<void> {
-  const runCommand = createCommandRunner(options.format);
+export async function cmdBatchUpdate(options: BatchUpdateOptions): Promise<void> {
+  const ids = options.ids.split(",").map((id) => parseInt(id.trim(), 10));
 
-  let ids: number[] = [];
-  let collectionId = 0;
-
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i] ?? "";
-    if (arg === "--ids") {
-      i++;
-      ids = (args[i] ?? "").split(",").map((id) => parseInt(id.trim(), 10));
-    } else if (arg === "--collection" || arg === "-c") {
-      i++;
-      collectionId = parseInt(args[i] ?? "0", 10);
-    }
+  if (ids.length === 0 || ids.some(Number.isNaN)) {
+    outputError("--ids is required (comma-separated list)", 400);
   }
 
-  if (ids.length === 0) {
-    outputError("--ids is required (comma-separated list)", 400, undefined, options.format);
+  if (!options.json) {
+    outputError("JSON patch data is required", 400);
   }
 
+  const collectionId = options.collection ? parseInt(options.collection, 10) : 0;
   const api = getAuthenticatedAPI(options);
+  const patchData: RaindropUpdate = JSON.parse(options.json);
+  const success = await withSpinner(`Updating ${ids.length} bookmark(s)...`, () =>
+    api.batchUpdateRaindrops(collectionId, ids, patchData),
+  );
+  output({ success }, options.format);
+}
 
-  await runCommand(async () => {
-    const success = await withSpinner(`Deleting ${ids.length} bookmark(s)...`, () =>
-      api.batchDeleteRaindrops(collectionId, ids),
-    );
-    output({ success }, options.format);
-  });
+export interface BatchDeleteOptions extends GlobalOptions {
+  ids: string;
+  collection?: string;
+}
+
+export async function cmdBatchDelete(options: BatchDeleteOptions): Promise<void> {
+  const ids = options.ids.split(",").map((id) => parseInt(id.trim(), 10));
+
+  if (ids.length === 0 || ids.some(Number.isNaN)) {
+    outputError("--ids is required (comma-separated list)", 400);
+  }
+
+  const collectionId = options.collection ? parseInt(options.collection, 10) : 0;
+  const api = getAuthenticatedAPI(options);
+  const success = await withSpinner(`Deleting ${ids.length} bookmark(s)...`, () =>
+    api.batchDeleteRaindrops(collectionId, ids),
+  );
+  output({ success }, options.format);
 }

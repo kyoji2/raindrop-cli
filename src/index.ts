@@ -109,7 +109,7 @@ program
   .action(
     withErrorHandler(async (token: string | undefined, _options, cmd: Command) => {
       const globalOpts = getGlobalOptions(cmd);
-      await cmdLogin(token ? [token] : [], globalOpts);
+      await cmdLogin({ ...globalOpts, token });
     }),
   );
 
@@ -170,11 +170,13 @@ program
   .action(
     withErrorHandler(async (query: string, options, cmd: Command) => {
       const globalOpts = getGlobalOptions(cmd);
-      const args: string[] = [query];
-      if (options.collection) args.push("--collection", options.collection);
-      if (options.limit) args.push("--limit", options.limit);
-      if (options.pretty) args.push("--pretty");
-      await cmdSearch(args, globalOpts);
+      await cmdSearch({
+        ...globalOpts,
+        query,
+        collection: options.collection,
+        limit: options.limit,
+        pretty: options.pretty,
+      });
     }),
   );
 
@@ -185,7 +187,7 @@ program
   .action(
     withErrorHandler(async (id: string, _options, cmd: Command) => {
       const globalOpts = getGlobalOptions(cmd);
-      await cmdGet([id], globalOpts);
+      await cmdGet({ ...globalOpts, id });
     }),
   );
 
@@ -196,7 +198,7 @@ program
   .action(
     withErrorHandler(async (id: string, _options, cmd: Command) => {
       const globalOpts = getGlobalOptions(cmd);
-      await cmdSuggest([id], globalOpts);
+      await cmdSuggest({ ...globalOpts, id });
     }),
   );
 
@@ -207,7 +209,7 @@ program
   .action(
     withErrorHandler(async (url: string, _options, cmd: Command) => {
       const globalOpts = getGlobalOptions(cmd);
-      await cmdWayback([url], globalOpts);
+      await cmdWayback({ ...globalOpts, url });
     }),
   );
 
@@ -221,11 +223,7 @@ program
   .action(
     withErrorHandler(async (url: string, options, cmd: Command) => {
       const globalOpts = getGlobalOptions(cmd);
-      const args: string[] = [url];
-      if (options.title) args.push("--title", options.title);
-      if (options.tags) args.push("--tags", options.tags);
-      if (options.collection) args.push("--collection", options.collection);
-      await cmdAdd(args, globalOpts);
+      await cmdAdd({ ...globalOpts, url, title: options.title, tags: options.tags, collection: options.collection });
     }),
   );
 
@@ -237,7 +235,7 @@ program
   .action(
     withErrorHandler(async (id: string, json: string, _options, cmd: Command) => {
       const globalOpts = getGlobalOptions(cmd);
-      await cmdPatch([id, json], globalOpts);
+      await cmdPatch({ ...globalOpts, id, json });
     }),
   );
 
@@ -248,7 +246,7 @@ program
   .action(
     withErrorHandler(async (id: string, _options, cmd: Command) => {
       const globalOpts = getGlobalOptions(cmd);
-      await cmdDelete([id], globalOpts);
+      await cmdDelete({ ...globalOpts, id });
     }),
   );
 
@@ -265,12 +263,14 @@ collectionCmd
   .action(
     withErrorHandler(async (title: string, options, cmd: Command) => {
       const globalOpts = getGlobalOptions(cmd);
-      const args: string[] = [title];
-      if (options.parent) args.push("--parent", options.parent);
-      if (options.public) args.push("--public");
-      if (options.private) args.push("--private");
-      if (options.view) args.push("--view", options.view);
-      await cmdCollectionCreate(args, globalOpts);
+      await cmdCollectionCreate({
+        ...globalOpts,
+        title,
+        parent: options.parent,
+        public: options.public,
+        private: options.private,
+        view: options.view,
+      });
     }),
   );
 
@@ -281,7 +281,7 @@ collectionCmd
   .action(
     withErrorHandler(async (id: string, _options, cmd: Command) => {
       const globalOpts = getGlobalOptions(cmd);
-      await cmdCollectionGet([id], globalOpts);
+      await cmdCollectionGet({ ...globalOpts, id });
     }),
   );
 
@@ -293,7 +293,7 @@ collectionCmd
   .action(
     withErrorHandler(async (id: string, json: string, _options, cmd: Command) => {
       const globalOpts = getGlobalOptions(cmd);
-      await cmdCollectionUpdate([id, json], globalOpts);
+      await cmdCollectionUpdate({ ...globalOpts, id, json });
     }),
   );
 
@@ -304,7 +304,7 @@ collectionCmd
   .action(
     withErrorHandler(async (id: string, _options, cmd: Command) => {
       const globalOpts = getGlobalOptions(cmd);
-      await cmdCollectionDelete([id], globalOpts);
+      await cmdCollectionDelete({ ...globalOpts, id });
     }),
   );
 
@@ -315,7 +315,7 @@ collectionCmd
   .action(
     withErrorHandler(async (ids: string, _options, cmd: Command) => {
       const globalOpts = getGlobalOptions(cmd);
-      await cmdCollectionDeleteMultiple([ids], globalOpts);
+      await cmdCollectionDeleteMultiple({ ...globalOpts, ids });
     }),
   );
 
@@ -326,7 +326,7 @@ collectionCmd
   .action(
     withErrorHandler(async (sort: string, _options, cmd: Command) => {
       const globalOpts = getGlobalOptions(cmd);
-      await cmdCollectionReorder([sort], globalOpts);
+      await cmdCollectionReorder({ ...globalOpts, sort });
     }),
   );
 
@@ -337,7 +337,7 @@ collectionCmd
   .action(
     withErrorHandler(async (expanded: string, _options, cmd: Command) => {
       const globalOpts = getGlobalOptions(cmd);
-      await cmdCollectionExpandAll([expanded], globalOpts);
+      await cmdCollectionExpandAll({ ...globalOpts, expanded });
     }),
   );
 
@@ -349,7 +349,7 @@ collectionCmd
   .action(
     withErrorHandler(async (ids: string, target: string, _options, cmd: Command) => {
       const globalOpts = getGlobalOptions(cmd);
-      await cmdCollectionMerge([ids, target], globalOpts);
+      await cmdCollectionMerge({ ...globalOpts, ids, target });
     }),
   );
 
@@ -381,7 +381,7 @@ collectionCmd
   .action(
     withErrorHandler(async (id: string, source: string, _options, cmd: Command) => {
       const globalOpts = getGlobalOptions(cmd);
-      await cmdCollectionCover([id, source], globalOpts);
+      await cmdCollectionCover({ ...globalOpts, id, source });
     }),
   );
 
@@ -393,7 +393,7 @@ collectionCmd
   .action(
     withErrorHandler(async (id: string, query: string, _options, cmd: Command) => {
       const globalOpts = getGlobalOptions(cmd);
-      await cmdCollectionSetIcon([id, query], globalOpts);
+      await cmdCollectionSetIcon({ ...globalOpts, id, query });
     }),
   );
 
@@ -407,9 +407,7 @@ tagCmd
   .action(
     withErrorHandler(async (tags: string[], options, cmd: Command) => {
       const globalOpts = getGlobalOptions(cmd);
-      const args: string[] = [...tags];
-      if (options.collection) args.push("--collection", options.collection);
-      await cmdTagDelete(args, globalOpts);
+      await cmdTagDelete({ ...globalOpts, tags, collection: options.collection });
     }),
   );
 
@@ -422,9 +420,7 @@ tagCmd
   .action(
     withErrorHandler(async (oldName: string, newName: string, options, cmd: Command) => {
       const globalOpts = getGlobalOptions(cmd);
-      const args: string[] = [oldName, newName];
-      if (options.collection) args.push("--collection", options.collection);
-      await cmdTagRename(args, globalOpts);
+      await cmdTagRename({ ...globalOpts, oldName, newName, collection: options.collection });
     }),
   );
 
@@ -439,10 +435,7 @@ batchCmd
   .action(
     withErrorHandler(async (json: string, options, cmd: Command) => {
       const globalOpts = getGlobalOptions(cmd);
-      const args: string[] = ["--ids", options.ids];
-      if (options.collection) args.push("--collection", options.collection);
-      args.push(json);
-      await cmdBatchUpdate(args, globalOpts);
+      await cmdBatchUpdate({ ...globalOpts, ids: options.ids, json, collection: options.collection });
     }),
   );
 
@@ -454,9 +447,7 @@ batchCmd
   .action(
     withErrorHandler(async (options, cmd: Command) => {
       const globalOpts = getGlobalOptions(cmd);
-      const args: string[] = ["--ids", options.ids];
-      if (options.collection) args.push("--collection", options.collection);
-      await cmdBatchDelete(args, globalOpts);
+      await cmdBatchDelete({ ...globalOpts, ids: options.ids, collection: options.collection });
     }),
   );
 
