@@ -3,32 +3,32 @@ import { z } from "zod";
 export const RaindropUserSchema = z.object({
   _id: z.number(),
   fullName: z.string(),
-  email: z.string().optional(),
-  avatar: z.string().optional(),
-  pro: z.boolean().optional(),
+  email: z.string().nullish(),
+  avatar: z.string().nullish(),
+  pro: z.boolean().nullish(),
 });
 
 export const CollectionSchema = z.object({
   _id: z.number(),
   title: z.string(),
   count: z.number(),
-  parent: z.object({ $id: z.number() }).optional(),
-  cover: z.array(z.string()).optional(),
-  color: z.string().optional(),
-  view: z.enum(["list", "simple", "grid", "masonry"]).optional(),
-  public: z.boolean().optional(),
-  expanded: z.boolean().optional(),
-  lastUpdate: z.string().optional(),
-  created: z.string().optional(),
-  sort: z.number().optional(),
+  parent: z.object({ $id: z.number() }).nullish(),
+  cover: z.array(z.string()).nullish(),
+  color: z.string().nullish(),
+  view: z.enum(["list", "simple", "grid", "masonry"]).nullish(),
+  public: z.boolean().nullish(),
+  expanded: z.boolean().nullish(),
+  lastUpdate: z.string().nullish(),
+  created: z.string().nullish(),
+  sort: z.number().nullish(),
 });
 
 export const HighlightSchema = z.object({
   _id: z.string(),
   text: z.string(),
-  note: z.string().optional(),
-  color: z.string().optional(),
-  created: z.string().optional(),
+  note: z.string().nullish(),
+  color: z.string().nullish(),
+  created: z.string().nullish(),
 });
 
 export const MediaSchema = z.object({
@@ -40,24 +40,24 @@ export const RaindropSchema = z.object({
   _id: z.number(),
   title: z.string(),
   link: z.string(),
-  excerpt: z.string().optional(),
-  note: z.string().optional(),
-  type: z.enum(["link", "article", "image", "video", "document", "audio"]).optional(),
+  excerpt: z.string().nullish(),
+  note: z.string().nullish(),
+  type: z.enum(["link", "article", "image", "video", "document", "audio"]).nullish(),
   tags: z.array(z.string()),
-  cover: z.string().optional(),
-  domain: z.string().optional(),
-  created: z.string().optional(),
-  lastUpdate: z.string().optional(),
-  collection: z.object({ $id: z.number() }).optional(),
-  highlights: z.array(HighlightSchema).optional(),
-  important: z.boolean().optional(),
-  removed: z.boolean().optional(),
-  media: z.array(MediaSchema).optional(),
+  cover: z.string().nullish(),
+  domain: z.string().nullish(),
+  created: z.string().nullish(),
+  lastUpdate: z.string().nullish(),
+  collection: z.object({ $id: z.number() }).nullish(),
+  highlights: z.array(HighlightSchema).nullish(),
+  important: z.boolean().nullish(),
+  removed: z.boolean().nullish(),
+  media: z.array(MediaSchema).nullish(),
 });
 
 export const TagSchema = z.object({
   _id: z.string(),
-  count: z.number().optional(),
+  count: z.number().nullish(),
 });
 
 export const UserStatsSchema = z.object({
@@ -102,24 +102,24 @@ export const StatsResponseSchema = z.object({
 
 export const ResultResponseSchema = z.object({
   result: z.boolean(),
-  count: z.number().optional(),
+  count: z.number().nullish(),
 });
 
 export const SuggestionsResponseSchema = z.object({
   result: z.boolean(),
   item: z
     .object({
-      tags: z.array(z.string()).optional(),
-      collections: z.array(CollectionSchema).optional(),
+      tags: z.array(z.string()).nullish(),
+      collections: z.array(CollectionSchema).nullish(),
     })
-    .optional(),
+    .nullish(),
 });
 
 export const CoversResponseSchema = z.object({
   result: z.boolean(),
   items: z.array(
     z.object({
-      icons: z.array(z.object({ png: z.string() })).optional(),
+      icons: z.array(z.object({ png: z.string() })).nullish(),
     }),
   ),
 });
