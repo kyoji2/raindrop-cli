@@ -40,6 +40,13 @@ function calculateBackoff(attempt: number, baseMs: number = 1000, maxMs: number 
   return Math.min(exponential + jitter, maxMs);
 }
 
+function assertDefined<T>(value: T | undefined | null, context: string): T {
+  if (value === undefined || value === null) {
+    throw new RaindropError(`Unexpected empty response: ${context}`, 500);
+  }
+  return value;
+}
+
 export class RaindropAPI {
   private static readonly BASE_URL = "https://api.raindrop.io/rest/v1";
   private static readonly MAX_RETRIES = 3;
@@ -127,28 +134,25 @@ export class RaindropAPI {
       url += `?${searchParams.toString()}`;
     }
 
-    const startTime = Date.now();
     let attempt = 0;
 
     while (attempt < RaindropAPI.MAX_RETRIES) {
-      if (Date.now() - startTime > RaindropAPI.REQUEST_TIMEOUT_MS) {
-        throw new RaindropError(
-          `Request timeout after ${RaindropAPI.REQUEST_TIMEOUT_MS}ms`,
-          504,
-          "The request took too long. Try again later.",
-        );
-      }
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), RaindropAPI.REQUEST_TIMEOUT_MS);
 
       try {
         const response = await fetch(url, {
           method,
           headers: this.headers,
           body: options.json ? JSON.stringify(options.json) : undefined,
+          signal: controller.signal,
         });
+
+        clearTimeout(timeoutId);
 
         if (response.status === 429) {
           attempt++;
-          const retryAfter = parseInt(response.headers.get("Retry-After") || "10", 10);
+          const retryAfter = Number.parseInt(response.headers.get("Retry-After") || "10", 10);
           const backoff = Math.max(retryAfter * 1000, calculateBackoff(attempt));
 
           if (attempt >= RaindropAPI.MAX_RETRIES) {
@@ -205,7 +209,17 @@ export class RaindropAPI {
 
         return (await response.json()) as ApiResponse<T>;
       } catch (error) {
+        clearTimeout(timeoutId);
+
         if (error instanceof RaindropError) throw error;
+
+        if (error instanceof Error && error.name === "AbortError") {
+          throw new RaindropError(
+            `Request timeout after ${RaindropAPI.REQUEST_TIMEOUT_MS}ms`,
+            504,
+            "The request took too long. Try again later.",
+          );
+        }
 
         attempt++;
         if (attempt >= RaindropAPI.MAX_RETRIES) {
@@ -225,7 +239,7 @@ export class RaindropAPI {
 
   async getUser(): Promise<RaindropUser> {
     const data = await this.request<RaindropUser>("GET", "/user");
-    return data.user!;
+    return assertDefined(data.user, "user");
   }
 
   async getStats(): Promise<UserStats[]> {
@@ -250,21 +264,21 @@ export class RaindropAPI {
 
   async getCollection(id: number): Promise<Collection> {
     const data = await this.request<Collection>("GET", `/collection/${id}`);
-    return data.item!;
+    return assertDefined(data.item, "collection");
   }
 
   async createCollection(collection: CollectionCreate): Promise<Collection> {
     const data = await this.request<Collection>("POST", "/collection", {
       json: collection,
     });
-    return data.item!;
+    return assertDefined(data.item, "collection");
   }
 
   async updateCollection(id: number, update: CollectionUpdate): Promise<Collection> {
     const data = await this.request<Collection>("PUT", `/collection/${id}`, {
       json: update,
     });
-    return data.item!;
+    return assertDefined(data.item, "collection");
   }
 
   async deleteCollection(id: number): Promise<boolean> {
@@ -393,21 +407,21 @@ export class RaindropAPI {
 
   async getRaindrop(id: number): Promise<Raindrop> {
     const data = await this.request<Raindrop>("GET", `/raindrop/${id}`);
-    return data.item!;
+    return assertDefined(data.item, "raindrop");
   }
 
   async addRaindrop(raindrop: RaindropCreate): Promise<Raindrop> {
     const data = await this.request<Raindrop>("POST", "/raindrop", {
       json: raindrop,
     });
-    return data.item!;
+    return assertDefined(data.item, "raindrop");
   }
 
   async updateRaindrop(id: number, update: RaindropUpdate): Promise<Raindrop> {
     const data = await this.request<Raindrop>("PUT", `/raindrop/${id}`, {
       json: update,
     });
-    return data.item!;
+    return assertDefined(data.item, "raindrop");
   }
 
   async deleteRaindrop(id: number): Promise<boolean> {
