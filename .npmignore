@@ -1,0 +1,27 @@
+# Source files
+tests/
+*.test.ts
+
+# Development files
+.git/
+.github/
+.vscode/
+*.log
+*.swp
+*.swo
+*~
+
+# Build artifacts
+node_modules/
+bun.lockb
+
+# Documentation
+CLAUDE.md
+.env.example
+
+# CI/CD
+.github/
+
+# OS files
+.DS_Store
+Thumbs.db
