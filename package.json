@@ -5,7 +5,7 @@
   "author": "kyoji2",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kyoji2/raindrop-cli.git"
+    "url": "git+https://github.com/kyoji2/raindrop-cli.git"
   },
   "bugs": {
     "url": "https://github.com/kyoji2/raindrop-cli/issues"
@@ -28,7 +28,7 @@
     "./utils": "./src/utils/index.ts"
   },
   "bin": {
-    "raindrop": "./dist/index.js"
+    "raindrop": "dist/index.js"
   },
   "scripts": {
     "start": "bun run src/index.ts",
