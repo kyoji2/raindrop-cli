@@ -1,67 +1,21 @@
-export interface RaindropUser {
-  _id: number;
-  fullName: string;
-  email?: string;
-  avatar?: string;
-  pro?: boolean;
-}
+import type { z } from "zod";
+import type {
+  CollectionSchema,
+  HighlightSchema,
+  MediaSchema,
+  RaindropSchema,
+  RaindropUserSchema,
+  TagSchema,
+  UserStatsSchema,
+} from "./schemas";
 
-export interface Collection {
-  _id: number;
-  title: string;
-  count: number;
-  parent?: { $id: number };
-  cover?: string[];
-  color?: string;
-  view?: "list" | "simple" | "grid" | "masonry";
-  public?: boolean;
-  expanded?: boolean;
-  lastUpdate?: string;
-  created?: string;
-  sort?: number;
-}
-
-export interface Raindrop {
-  _id: number;
-  title: string;
-  link: string;
-  excerpt?: string;
-  note?: string;
-  type?: "link" | "article" | "image" | "video" | "document" | "audio";
-  tags: string[];
-  cover?: string;
-  domain?: string;
-  created?: string;
-  lastUpdate?: string;
-  collection?: { $id: number };
-  highlights?: Highlight[];
-  important?: boolean;
-  removed?: boolean;
-  media?: Media[];
-}
-
-export interface Highlight {
-  _id: string;
-  text: string;
-  note?: string;
-  color?: string;
-  created?: string;
-}
-
-export interface Media {
-  link: string;
-  type: string;
-}
-
-export interface Tag {
-  _id: string;
-  count?: number;
-}
-
-export interface UserStats {
-  _id: number;
-  count: number;
-}
+export type RaindropUser = z.infer<typeof RaindropUserSchema>;
+export type Collection = z.infer<typeof CollectionSchema>;
+export type Highlight = z.infer<typeof HighlightSchema>;
+export type Media = z.infer<typeof MediaSchema>;
+export type Raindrop = z.infer<typeof RaindropSchema>;
+export type Tag = z.infer<typeof TagSchema>;
+export type UserStats = z.infer<typeof UserStatsSchema>;
 
 export interface CollectionCreate {
   title: string;

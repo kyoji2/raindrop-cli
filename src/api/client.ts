@@ -1,3 +1,16 @@
+import type { z } from "zod";
+import {
+  CollectionResponseSchema,
+  CollectionsResponseSchema,
+  CoversResponseSchema,
+  RaindropResponseSchema,
+  RaindropsResponseSchema,
+  ResultResponseSchema,
+  StatsResponseSchema,
+  SuggestionsResponseSchema,
+  TagsResponseSchema,
+  UserResponseSchema,
+} from "./schemas";
 import type {
   ApiResponse,
   Collection,
@@ -40,11 +53,13 @@ function calculateBackoff(attempt: number, baseMs: number = 1000, maxMs: number 
   return Math.min(exponential + jitter, maxMs);
 }
 
-function assertDefined<T>(value: T | undefined | null, context: string): T {
-  if (value === undefined || value === null) {
-    throw new RaindropError(`Unexpected empty response: ${context}`, 500);
+function parseResponse<T>(schema: z.ZodType<T>, data: unknown, context: string): T {
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    const issues = result.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(", ");
+    throw new RaindropError(`Invalid API response for ${context}: ${issues}`, 500);
   }
-  return value;
+  return result.data;
 }
 
 export class RaindropAPI {
@@ -238,85 +253,99 @@ export class RaindropAPI {
   }
 
   async getUser(): Promise<RaindropUser> {
-    const data = await this.request<RaindropUser>("GET", "/user");
-    return assertDefined(data.user, "user");
+    const data = await this.request<unknown>("GET", "/user");
+    const parsed = parseResponse(UserResponseSchema, data, "getUser");
+    return parsed.user;
   }
 
   async getStats(): Promise<UserStats[]> {
-    const data = await this.request<UserStats>("GET", "/user/stats");
-    return data.items || [];
+    const data = await this.request<unknown>("GET", "/user/stats");
+    const parsed = parseResponse(StatsResponseSchema, data, "getStats");
+    return parsed.items;
   }
 
   async getCollections(): Promise<Collection[]> {
-    const data = await this.request<Collection>("GET", "/collections/all");
-    return data.items || [];
+    const data = await this.request<unknown>("GET", "/collections/all");
+    const parsed = parseResponse(CollectionsResponseSchema, data, "getCollections");
+    return parsed.items;
   }
 
   async getRootCollections(): Promise<Collection[]> {
-    const data = await this.request<Collection>("GET", "/collections");
-    return data.items || [];
+    const data = await this.request<unknown>("GET", "/collections");
+    const parsed = parseResponse(CollectionsResponseSchema, data, "getRootCollections");
+    return parsed.items;
   }
 
   async getChildCollections(): Promise<Collection[]> {
-    const data = await this.request<Collection>("GET", "/collections/childrens");
-    return data.items || [];
+    const data = await this.request<unknown>("GET", "/collections/childrens");
+    const parsed = parseResponse(CollectionsResponseSchema, data, "getChildCollections");
+    return parsed.items;
   }
 
   async getCollection(id: number): Promise<Collection> {
-    const data = await this.request<Collection>("GET", `/collection/${id}`);
-    return assertDefined(data.item, "collection");
+    const data = await this.request<unknown>("GET", `/collection/${id}`);
+    const parsed = parseResponse(CollectionResponseSchema, data, "getCollection");
+    return parsed.item;
   }
 
   async createCollection(collection: CollectionCreate): Promise<Collection> {
-    const data = await this.request<Collection>("POST", "/collection", {
+    const data = await this.request<unknown>("POST", "/collection", {
       json: collection,
     });
-    return assertDefined(data.item, "collection");
+    const parsed = parseResponse(CollectionResponseSchema, data, "createCollection");
+    return parsed.item;
   }
 
   async updateCollection(id: number, update: CollectionUpdate): Promise<Collection> {
-    const data = await this.request<Collection>("PUT", `/collection/${id}`, {
+    const data = await this.request<unknown>("PUT", `/collection/${id}`, {
       json: update,
     });
-    return assertDefined(data.item, "collection");
+    const parsed = parseResponse(CollectionResponseSchema, data, "updateCollection");
+    return parsed.item;
   }
 
   async deleteCollection(id: number): Promise<boolean> {
-    const data = await this.request<never>("DELETE", `/collection/${id}`);
-    return data.result;
+    const data = await this.request<unknown>("DELETE", `/collection/${id}`);
+    const parsed = parseResponse(ResultResponseSchema, data, "deleteCollection");
+    return parsed.result;
   }
 
   async deleteCollections(ids: number[]): Promise<boolean> {
-    const data = await this.request<never>("DELETE", "/collections", {
+    const data = await this.request<unknown>("DELETE", "/collections", {
       json: { ids },
     });
-    return data.result;
+    const parsed = parseResponse(ResultResponseSchema, data, "deleteCollections");
+    return parsed.result;
   }
 
   async reorderCollections(sort: string): Promise<boolean> {
-    const data = await this.request<never>("PUT", "/collections", {
+    const data = await this.request<unknown>("PUT", "/collections", {
       json: { sort },
     });
-    return data.result;
+    const parsed = parseResponse(ResultResponseSchema, data, "reorderCollections");
+    return parsed.result;
   }
 
   async expandAllCollections(expanded: boolean): Promise<boolean> {
-    const data = await this.request<never>("PUT", "/collections", {
+    const data = await this.request<unknown>("PUT", "/collections", {
       json: { expanded },
     });
-    return data.result;
+    const parsed = parseResponse(ResultResponseSchema, data, "expandAllCollections");
+    return parsed.result;
   }
 
   async mergeCollections(ids: number[], targetId: number): Promise<boolean> {
-    const data = await this.request<never>("PUT", "/collections/merge", {
+    const data = await this.request<unknown>("PUT", "/collections/merge", {
       json: { ids, to: targetId },
     });
-    return data.result;
+    const parsed = parseResponse(ResultResponseSchema, data, "mergeCollections");
+    return parsed.result;
   }
 
   async cleanEmptyCollections(): Promise<number> {
-    const data = await this.request<never>("PUT", "/collections/clean");
-    return data.count || 0;
+    const data = await this.request<unknown>("PUT", "/collections/clean");
+    const parsed = parseResponse(ResultResponseSchema, data, "cleanEmptyCollections");
+    return parsed.count || 0;
   }
 
   async uploadCollectionCover(id: number, filePath: string): Promise<Collection> {
@@ -340,17 +369,16 @@ export class RaindropAPI {
       throw new RaindropError(`Upload failed: ${response.status}`, response.status);
     }
 
-    const data = (await response.json()) as { item: Collection };
-    return data.item;
+    const data = await response.json();
+    const parsed = parseResponse(CollectionResponseSchema, data, "uploadCollectionCover");
+    return parsed.item;
   }
 
   async searchCovers(query: string): Promise<string[]> {
-    const data = await this.request<{ icons: { png: string }[] }>(
-      "GET",
-      `/collections/covers/${encodeURIComponent(query)}`,
-    );
+    const data = await this.request<unknown>("GET", `/collections/covers/${encodeURIComponent(query)}`);
+    const parsed = parseResponse(CoversResponseSchema, data, "searchCovers");
     const icons: string[] = [];
-    for (const group of data.items || []) {
+    for (const group of parsed.items) {
       for (const icon of group.icons || []) {
         if (icon.png) icons.push(icon.png);
       }
@@ -359,27 +387,31 @@ export class RaindropAPI {
   }
 
   async emptyTrash(): Promise<boolean> {
-    const data = await this.request<never>("DELETE", "/collection/-99");
-    return data.result;
+    const data = await this.request<unknown>("DELETE", "/collection/-99");
+    const parsed = parseResponse(ResultResponseSchema, data, "emptyTrash");
+    return parsed.result;
   }
 
   async getTags(collectionId: number = 0): Promise<Tag[]> {
-    const data = await this.request<Tag>("GET", `/tags/${collectionId}`);
-    return data.items || [];
+    const data = await this.request<unknown>("GET", `/tags/${collectionId}`);
+    const parsed = parseResponse(TagsResponseSchema, data, "getTags");
+    return parsed.items;
   }
 
   async deleteTags(tags: string[], collectionId: number = 0): Promise<boolean> {
-    const data = await this.request<never>("DELETE", `/tags/${collectionId}`, {
+    const data = await this.request<unknown>("DELETE", `/tags/${collectionId}`, {
       json: { tags },
     });
-    return data.result;
+    const parsed = parseResponse(ResultResponseSchema, data, "deleteTags");
+    return parsed.result;
   }
 
   async renameTag(oldName: string, newName: string, collectionId: number = 0): Promise<boolean> {
-    const data = await this.request<never>("PUT", `/tags/${collectionId}`, {
+    const data = await this.request<unknown>("PUT", `/tags/${collectionId}`, {
       json: { replace: newName, tags: [oldName] },
     });
-    return data.result;
+    const parsed = parseResponse(ResultResponseSchema, data, "renameTag");
+    return parsed.result;
   }
 
   async search(query: string = "", collectionId: number = 0, limit: number = 50): Promise<Raindrop[]> {
@@ -388,11 +420,12 @@ export class RaindropAPI {
     const perPage = Math.min(limit, 50);
 
     while (allItems.length < limit) {
-      const data = await this.request<Raindrop>("GET", `/raindrops/${collectionId}`, {
+      const data = await this.request<unknown>("GET", `/raindrops/${collectionId}`, {
         params: { search: query, page, perpage: perPage },
       });
+      const parsed = parseResponse(RaindropsResponseSchema, data, "search");
 
-      const items = data.items || [];
+      const items = parsed.items;
       if (items.length === 0) break;
 
       const remaining = limit - allItems.length;
@@ -406,50 +439,54 @@ export class RaindropAPI {
   }
 
   async getRaindrop(id: number): Promise<Raindrop> {
-    const data = await this.request<Raindrop>("GET", `/raindrop/${id}`);
-    return assertDefined(data.item, "raindrop");
+    const data = await this.request<unknown>("GET", `/raindrop/${id}`);
+    const parsed = parseResponse(RaindropResponseSchema, data, "getRaindrop");
+    return parsed.item;
   }
 
   async addRaindrop(raindrop: RaindropCreate): Promise<Raindrop> {
-    const data = await this.request<Raindrop>("POST", "/raindrop", {
+    const data = await this.request<unknown>("POST", "/raindrop", {
       json: raindrop,
     });
-    return assertDefined(data.item, "raindrop");
+    const parsed = parseResponse(RaindropResponseSchema, data, "addRaindrop");
+    return parsed.item;
   }
 
   async updateRaindrop(id: number, update: RaindropUpdate): Promise<Raindrop> {
-    const data = await this.request<Raindrop>("PUT", `/raindrop/${id}`, {
+    const data = await this.request<unknown>("PUT", `/raindrop/${id}`, {
       json: update,
     });
-    return assertDefined(data.item, "raindrop");
+    const parsed = parseResponse(RaindropResponseSchema, data, "updateRaindrop");
+    return parsed.item;
   }
 
   async deleteRaindrop(id: number): Promise<boolean> {
-    const data = await this.request<never>("DELETE", `/raindrop/${id}`);
-    return data.result;
+    const data = await this.request<unknown>("DELETE", `/raindrop/${id}`);
+    const parsed = parseResponse(ResultResponseSchema, data, "deleteRaindrop");
+    return parsed.result;
   }
 
   async batchUpdateRaindrops(collectionId: number, ids: number[], update: RaindropUpdate): Promise<boolean> {
     const payload = { ...update, ids };
-    const data = await this.request<never>("PUT", `/raindrops/${collectionId}`, {
+    const data = await this.request<unknown>("PUT", `/raindrops/${collectionId}`, {
       json: payload,
     });
-    return data.result;
+    const parsed = parseResponse(ResultResponseSchema, data, "batchUpdateRaindrops");
+    return parsed.result;
   }
 
   async batchDeleteRaindrops(collectionId: number, ids: number[]): Promise<boolean> {
-    const data = await this.request<never>("DELETE", `/raindrops/${collectionId}`, {
+    const data = await this.request<unknown>("DELETE", `/raindrops/${collectionId}`, {
       json: { ids },
     });
-    return data.result;
+    const parsed = parseResponse(ResultResponseSchema, data, "batchDeleteRaindrops");
+    return parsed.result;
   }
 
   async getSuggestions(id: number): Promise<{ tags?: string[]; collections?: Collection[] }> {
-    const data = await this.request<{
-      tags?: string[];
-      collections?: Collection[];
-    }>("GET", `/raindrop/${id}/suggest`);
-    return data.item || {};
+    const data = await this.request<unknown>("GET", `/raindrop/${id}/suggest`);
+    const parsed = parseResponse(SuggestionsResponseSchema, data, "getSuggestions");
+    return parsed.item || {};
   }
 
   async checkWayback(url: string): Promise<string | null> {
