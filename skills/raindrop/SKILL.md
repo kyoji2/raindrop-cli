@@ -1,7 +1,12 @@
 ---
 name: raindrop
-description: Expert guidance for using the RaindropCLI - an AI-native command-line interface for managing Raindrop.io bookmarks, collections, and tags. Use this skill when working with bookmark management, searching bookmarks, organizing collections, or automating Raindrop.io workflows.
-homepage: https://github.com/kyoji2/raindrop-cli
+description: RaindropCLI commands for Raindrop.io bookmark management. Search, add, update, delete bookmarks. Create and organize collections. Manage tags. Batch operations.
+license: MIT
+compatibility: Requires Bun runtime (v1.0+) and Raindrop.io account with API token
+metadata:
+  author: kyoji2
+  homepage: https://github.com/kyoji2/raindrop-cli
+  version: "1.0"
 ---
 
 # Raindrop CLI Assistant
