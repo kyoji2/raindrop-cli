@@ -54,6 +54,7 @@ src/
 ## Key Patterns
 
 - Keep `AGENTS.md` updated whenever code changes affect tooling, runtime APIs, workflows, or conventions.
+- Always run lint and tests to verify code changes.
 
 ### Error Handling
 - `CLIError` class for user-facing errors (with optional hints)
