@@ -17,6 +17,18 @@ Designed for AI agents and automation scripts. **TOON** format for maximum token
 - Prefer Node standard APIs (`node:fs`, `node:timers/promises`, `node:child_process`) over `Bun.*` in source code.
 - Tests still run with `bun test`.
 
+## Release
+
+```bash
+# Bump and release (runs lint + tests, commits, tags, pushes)
+bun run release:patch
+bun run release:minor
+bun run release:major
+
+# Or set an explicit version
+bun run release -- 1.2.3
+```
+
 ## Installation
 
 ```bash

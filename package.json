@@ -38,7 +38,11 @@
     "lint:fix": "biome check --write ./src ./tests",
     "format": "biome format --write ./src ./tests",
     "build": "bun build src/index.ts --outdir dist --target bun && chmod +x dist/index.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "release": "bun run scripts/release.ts",
+    "release:patch": "bun run scripts/release.ts patch",
+    "release:minor": "bun run scripts/release.ts minor",
+    "release:major": "bun run scripts/release.ts major"
   },
   "dependencies": {
     "@toon-format/toon": "^2.1.0",

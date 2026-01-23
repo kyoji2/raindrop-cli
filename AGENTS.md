@@ -102,4 +102,7 @@ bun run lint           # Check with Biome
 bun run lint:fix       # Auto-fix lint issues
 bun run typecheck      # TypeScript check
 bun run build          # Build to dist/
+bun run release:patch  # Bump patch, lint/test, tag, and push
+bun run release:minor  # Bump minor, lint/test, tag, and push
+bun run release:major  # Bump major, lint/test, tag, and push
 ```
