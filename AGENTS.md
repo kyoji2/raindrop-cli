@@ -55,6 +55,7 @@ src/
 
 - Keep `AGENTS.md` updated whenever code changes affect tooling, runtime APIs, workflows, or conventions.
 - Always run lint and tests to verify code changes.
+- Use Conventional Commits style for git commit messages (e.g., `feat:`, `fix:`, `chore:`).
 
 ### Error Handling
 - `CLIError` class for user-facing errors (with optional hints)

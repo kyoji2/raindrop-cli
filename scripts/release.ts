@@ -122,7 +122,7 @@ async function main(): Promise<void> {
   await runCommand("bun", ["test"]);
 
   await runCommand("git", ["add", "package.json"]);
-  await runCommand("git", ["commit", "-m", `Bump version to ${nextVersion}`]);
+  await runCommand("git", ["commit", "-m", `chore(release): bump version to ${nextVersion}`]);
   await runCommand("git", ["tag", "-a", tag, "-m", tag]);
   await runCommand("git", ["push", "origin", "HEAD"]);
   await runCommand("git", ["push", "origin", tag]);
