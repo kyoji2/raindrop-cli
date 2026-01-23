@@ -1,6 +1,6 @@
 # raindrop-cli
 
-AI-native CLI for Raindrop.io. Built with TypeScript and Bun.
+AI-native CLI for Raindrop.io. Built with TypeScript, using Bun for tooling and Node standard APIs in the codebase.
 
 Designed for AI agents and automation scripts. **TOON** format for maximum token efficiency, with optional JSON output for standard integrations.
 
@@ -11,6 +11,11 @@ Designed for AI agents and automation scripts. **TOON** format for maximum token
 - **Hierarchy Support:** Create, move, and manage nested collections
 - **Batch Operations:** Bulk update or delete bookmarks efficiently
 - **Dry Run Mode:** Safe account management with `--dry-run` flag
+
+## Runtime Notes
+
+- Prefer Node standard APIs (`node:fs`, `node:timers/promises`, `node:child_process`) over `Bun.*` in source code.
+- Tests still run with `bun test`.
 
 ## Installation
 

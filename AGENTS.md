@@ -1,5 +1,5 @@
 ---
-description: Use Bun instead of Node.js, npm, pnpm, or vite.
+description: Use Bun for tooling; prefer Node standard APIs over Bun runtime APIs.
 globs: "*.ts, *.tsx, *.html, *.css, *.js, *.jsx, package.json"
 alwaysApply: false
 ---
@@ -53,6 +53,8 @@ src/
 
 ## Key Patterns
 
+- Keep `AGENTS.md` updated whenever code changes affect tooling, runtime APIs, workflows, or conventions.
+
 ### Error Handling
 - `CLIError` class for user-facing errors (with optional hints)
 - `RaindropError` for API errors (includes status code and hint)
@@ -69,9 +71,9 @@ src/
 - Single source of truth: schemas.ts defines structure, types.ts exports types
 - No `!` assertions - zod validates all nullable fields
 
-## Bun-Specific
+## Tooling (Bun)
 
-Default to using Bun instead of Node.js.
+Default to using Bun for local tooling, but prefer Node standard APIs in source code.
 
 - Use `bun <file>` instead of `node <file>` or `ts-node <file>`
 - Use `bun test` instead of `jest` or `vitest`
@@ -81,12 +83,13 @@ Default to using Bun instead of Node.js.
 - Use `bunx <package> <command>` instead of `npx <package> <command>`
 - Bun automatically loads .env, so don't use dotenv.
 
-### Bun APIs Used
+### Runtime APIs Preferred
 
-- `Bun.file()` for file operations
-- `Bun.sleep()` for async delays
-- `Bun.env` for environment variables
-- `bun:test` for testing
+- Use `node:fs`/`node:fs/promises` for file operations
+- Use `node:timers/promises` for async delays
+- Use `process.env` for environment variables
+- Use `node:child_process` for spawning
+- Testing still uses `bun:test`
 
 ## Commands
 
