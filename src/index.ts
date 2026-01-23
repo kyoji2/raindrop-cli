@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 
+import { readFile } from "node:fs/promises";
 import { Command } from "commander";
 import { RaindropError } from "./api";
 import {
@@ -35,7 +36,20 @@ import {
 } from "./commands";
 import { CLIError, type GlobalOptions, type OutputFormat } from "./utils";
 
-const VERSION = "0.1.0";
+async function getPackageVersion(): Promise<string> {
+  try {
+    const text = await readFile(new URL("../package.json", import.meta.url), "utf-8");
+    const pkg = JSON.parse(text) as { version?: unknown };
+
+    if (pkg && typeof pkg === "object" && typeof pkg.version === "string" && pkg.version.trim().length > 0) {
+      return pkg.version;
+    }
+  } catch {}
+
+  return "0.0.0";
+}
+
+const VERSION = await getPackageVersion();
 
 function getGlobalOptions(cmd: Command): GlobalOptions {
   const opts = cmd.optsWithGlobals();

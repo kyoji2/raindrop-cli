@@ -1,3 +1,7 @@
+import { Blob } from "node:buffer";
+import { readFile } from "node:fs/promises";
+import { basename } from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
 import type { z } from "zod";
 import {
   CollectionResponseSchema,
@@ -181,7 +185,7 @@ export class RaindropAPI {
           this.logger.warn(
             `[${method} ${path}] Rate limited. Retrying in ${Math.round(backoff / 1000)}s (attempt ${attempt}/${RaindropAPI.MAX_RETRIES})`,
           );
-          await Bun.sleep(backoff);
+          await delay(backoff);
           continue;
         }
 
@@ -199,7 +203,7 @@ export class RaindropAPI {
           this.logger.warn(
             `[${method} ${path}] Server error ${response.status}. Retrying in ${Math.round(backoff / 1000)}s (attempt ${attempt}/${RaindropAPI.MAX_RETRIES})`,
           );
-          await Bun.sleep(backoff);
+          await delay(backoff);
           continue;
         }
 
@@ -245,7 +249,7 @@ export class RaindropAPI {
         this.logger.warn(
           `[${method} ${path}] Network error. Retrying in ${Math.round(backoff / 1000)}s (attempt ${attempt}/${RaindropAPI.MAX_RETRIES})`,
         );
-        await Bun.sleep(backoff);
+        await delay(backoff);
       }
     }
 
@@ -355,9 +359,9 @@ export class RaindropAPI {
       return { _id: id, title: "Dry Run Icon", count: 0 };
     }
 
-    const file = Bun.file(filePath);
+    const fileBuffer = await readFile(filePath);
     const formData = new FormData();
-    formData.append("cover", file);
+    formData.append("cover", new Blob([fileBuffer]), basename(filePath));
 
     const response = await fetch(`${RaindropAPI.BASE_URL}/collection/${id}/cover`, {
       method: "PUT",

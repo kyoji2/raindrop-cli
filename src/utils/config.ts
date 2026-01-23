@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
@@ -22,13 +23,23 @@ function isValidConfig(data: unknown): data is Config {
   return typeof obj.token === "string" && obj.token.length > 0;
 }
 
+function isNotFoundError(error: unknown): error is { code?: string } {
+  if (typeof error !== "object" || error === null || !("code" in error)) {
+    return false;
+  }
+  return (error as { code?: string }).code === "ENOENT";
+}
+
 export async function loadConfig(): Promise<Config | null> {
   try {
-    const file = Bun.file(CONFIG_FILE);
-    const exists = await file.exists();
-    if (!exists) return null;
+    let text = "";
+    try {
+      text = await readFile(CONFIG_FILE, "utf-8");
+    } catch (error) {
+      if (isNotFoundError(error)) return null;
+      throw error;
+    }
 
-    const text = await file.text();
     if (!text.trim()) return null;
 
     let data: unknown;
@@ -74,16 +85,13 @@ export async function saveConfig(config: Config): Promise<void> {
     throw new ConfigError("Invalid token: token must be a non-empty string");
   }
 
-  await Bun.$`mkdir -p ${CONFIG_DIR}`;
-  await Bun.write(CONFIG_FILE, JSON.stringify(config, null, 2));
+  await mkdir(CONFIG_DIR, { recursive: true });
+  await writeFile(CONFIG_FILE, JSON.stringify(config, null, 2));
 }
 
 export async function deleteConfig(): Promise<void> {
   try {
-    const file = Bun.file(CONFIG_FILE);
-    if (await file.exists()) {
-      await Bun.$`rm -f ${CONFIG_FILE}`;
-    }
+    await rm(CONFIG_FILE, { force: true });
   } catch {}
 }
 

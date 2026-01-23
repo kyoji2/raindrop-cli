@@ -1,18 +1,43 @@
+import { spawn } from "node:child_process";
+import { readFile } from "node:fs/promises";
 import { describe, expect, test } from "bun:test";
-import { spawn } from "bun";
+
+const packageVersionPromise = (async () => {
+  try {
+    const text = await readFile(new URL("../package.json", import.meta.url), "utf-8");
+    const pkg = JSON.parse(text) as { version?: unknown };
+
+    if (pkg && typeof pkg === "object" && typeof pkg.version === "string" && pkg.version.trim().length > 0) {
+      return pkg.version;
+    }
+  } catch {}
+
+  return "0.0.0";
+})();
 
 describe("CLI Integration", () => {
-  const cli = async (args: string) => {
-    const proc = spawn({
-      cmd: ["bun", "run", "src/index.ts", ...args.split(" ")],
-      stdout: "pipe",
-      stderr: "pipe",
+  const cli = async (args: string) =>
+    await new Promise<{ stdout: string; stderr: string; exitCode: number }>((resolve, reject) => {
+      const argList = args.trim().length > 0 ? args.split(" ") : [];
+      const proc = spawn("bun", ["run", "src/index.ts", ...argList], {
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+
+      let stdout = "";
+      let stderr = "";
+
+      proc.stdout?.on("data", (chunk) => {
+        stdout += chunk.toString();
+      });
+      proc.stderr?.on("data", (chunk) => {
+        stderr += chunk.toString();
+      });
+
+      proc.on("error", reject);
+      proc.on("close", (code) => {
+        resolve({ stdout, stderr, exitCode: code ?? 0 });
+      });
     });
-    const stdout = await new Response(proc.stdout).text();
-    const stderr = await new Response(proc.stderr).text();
-    const exitCode = await proc.exited;
-    return { stdout, stderr, exitCode };
-  };
 
   describe("help and version", () => {
     test("--help shows usage", async () => {
@@ -25,8 +50,9 @@ describe("CLI Integration", () => {
 
     test("--version shows version", async () => {
       const { stdout } = await cli("--version");
+      const version = await packageVersionPromise;
 
-      expect(stdout).toContain("0.1.0");
+      expect(stdout).toContain(version);
     });
 
     test("-h shows help", async () => {
@@ -37,8 +63,9 @@ describe("CLI Integration", () => {
 
     test("-v shows version", async () => {
       const { stdout } = await cli("-v");
+      const version = await packageVersionPromise;
 
-      expect(stdout).toContain("0.1.0");
+      expect(stdout).toContain(version);
     });
   });
 

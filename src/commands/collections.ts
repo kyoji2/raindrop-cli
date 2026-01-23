@@ -1,3 +1,4 @@
+import { rm, writeFile } from "node:fs/promises";
 import type { CollectionCreate, CollectionUpdate } from "../api";
 import { type GlobalOptions, output, outputError } from "../utils/output";
 import { startSpinner, stopSpinner, withSpinner } from "../utils/spinner";
@@ -196,7 +197,7 @@ export async function cmdCollectionCover(options: CollectionCoverOptions): Promi
       outputError(`Failed to download image: ${response.status}`, response.status);
     }
     filePath = getTempFilePath("raindrop_cover", ".png");
-    await Bun.write(filePath, await response.arrayBuffer());
+    await writeFile(filePath, Buffer.from(await response.arrayBuffer()));
     stopSpinner(spinner, true, "Downloaded");
     isTemp = true;
   }
@@ -204,7 +205,7 @@ export async function cmdCollectionCover(options: CollectionCoverOptions): Promi
   const result = await withSpinner("Uploading cover...", () => api.uploadCollectionCover(id, filePath));
 
   if (isTemp) {
-    await Bun.$`rm -f ${filePath}`;
+    await rm(filePath, { force: true });
   }
 
   output(result, options.format);
@@ -246,12 +247,12 @@ export async function cmdCollectionSetIcon(options: CollectionSetIconOptions): P
   }
 
   const filePath = getTempFilePath("raindrop_icon", ".png");
-  await Bun.write(filePath, await response.arrayBuffer());
+  await writeFile(filePath, Buffer.from(await response.arrayBuffer()));
   stopSpinner(spinner, true, "Downloaded");
 
   const result = await withSpinner("Uploading icon...", () => api.uploadCollectionCover(id, filePath));
 
-  await Bun.$`rm -f ${filePath}`;
+  await rm(filePath, { force: true });
 
   output(result, options.format);
 }
